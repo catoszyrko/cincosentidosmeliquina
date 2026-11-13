@@ -46,6 +46,30 @@ gallery/   lago, familia, visitas, invierno
 - **Calificaciones y reseñas**: copiadas de Google en noviembre de 2026. Conviene actualizarlas cada tanto.
 - **Tarifas**: no hay precios publicados; el formulario abre WhatsApp para consultarlas.
 
+## SEO y Google Search Console
+
+Por ahora el sitio no redirige a ningún dominio: responde en el dominio desde el que se lo visita, y canonical, sitemap y robots usan ese mismo dominio. El `.htaccess` solo redirige `index.php` e `index.html` (URL del sitio anterior) a `/`.
+
+Cuando el sitio esté publicado en `cincosentidosmeliquina.com.ar` con SSL, conviene unificar todo en `https://cincosentidosmeliquina.com.ar/` (sin www), antes de cargarlo en Search Console:
+
+1. En `inc/config.php`, poner `'force_canonical_host' => true`.
+2. En `.htaccess`, descomentar el bloque "Dominio único".
+
+- `/sitemap.xml`: home, Hostería, Casa de Té y privacidad, con `lastmod` por página y las fotos de cada una (sitemap de imágenes). Se genera solo desde `inc/config.php`.
+- `/robots.txt`: permite todo salvo `/admin/` y los endpoints del formulario, y declara el sitemap.
+- Cada página tiene title, description, canonical, Open Graph y datos estructurados (BedAndBreakfast, CafeOrCoffeeShop con horario, WebSite, WebPage, FAQPage en la home, BreadcrumbList en las páginas de detalle). La 404 es `noindex`.
+
+Alta en Search Console, una vez publicado:
+
+1. Entrá a [Search Console](https://search.google.com/search-console) → **Agregar propiedad** → **Dominio** → `cincosentidosmeliquina.com.ar`.
+2. Copiá el registro TXT que te da Google y cargalo en la zona DNS del dominio (panel de Donweb). Puede tardar unas horas en verificarse.
+   - Alternativa: propiedad de tipo **Prefijo de URL** con `https://cincosentidosmeliquina.com.ar/` y método **Etiqueta HTML**. Pegá solo el valor de `content="…"` en `company.google_site_verification` de `inc/config.php` y subí el cambio.
+3. **Sitemaps** → agregar `sitemap.xml` → Enviar.
+4. **Inspección de URLs** → probá `/`, `/hosteria/` y `/casa-de-te/` → **Solicitar indexación**.
+5. Opcional: validá los datos estructurados en [Prueba de resultados enriquecidos](https://search.google.com/test/rich-results).
+
+Fuera del sitio, lo que más pesa para búsquedas locales es el **Perfil de Empresa de Google** (las fichas de Maps de la hostería y la casa de té): conviene que tengan este sitio web cargado y el mismo teléfono y dirección.
+
 ## Arquitectura
 
 ```

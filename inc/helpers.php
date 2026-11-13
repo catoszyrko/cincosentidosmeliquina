@@ -104,8 +104,22 @@ function canonical_host(): string
     return $host !== '' ? $host : 'cincosentidosmeliquina.com.ar';
 }
 
+function force_canonical_host(): bool
+{
+    return !empty(company()['force_canonical_host']);
+}
+
+function request_host(): string
+{
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    return preg_match('/^[a-z0-9.-]+(:\d+)?$/', $host) ? $host : '';
+}
+
 function public_origin(): string
 {
+    if (!force_canonical_host() && PHP_SAPI !== 'cli' && request_host() !== '') {
+        return (request_is_https() ? 'https' : 'http') . '://' . request_host();
+    }
     return 'https://' . canonical_host();
 }
 
@@ -121,7 +135,7 @@ function origin(): string
 
 function enforce_canonical_host(): void
 {
-    if (PHP_SAPI === 'cli' || is_local_request()) {
+    if (PHP_SAPI === 'cli' || is_local_request() || !force_canonical_host()) {
         return;
     }
 
@@ -154,6 +168,11 @@ function absolute_url(string $path): string
         return $path;
     }
     return origin() . (str_starts_with($path, '/') ? $path : '/' . $path);
+}
+
+function public_asset_url(string $path): string
+{
+    return preg_replace('/\?v=\d+$/', '', absolute_url(asset($path))) ?? absolute_url(asset($path));
 }
 
 function url(string $path = ''): string
@@ -491,10 +510,9 @@ function schema_json(): string
         'alternateName' => array_values(array_filter(array_merge([$co['short'] ?? ''], $schema['alternate_names'] ?? []))),
         'description' => site()['seo']['description'] ?? '',
         'url' => is_local_request() ? site_url() : public_origin() . '/',
-        'logo' => absolute_url(asset($co['logo'])),
-        'image' => absolute_url(asset($co['og_image'] ?? $co['logo'])),
+        'logo' => public_asset_url($co['logo']),
+        'image' => public_asset_url($co['og_image'] ?? $co['logo']),
         'telephone' => $c['phone'] ?? ('+' . preg_replace('/\D+/', '', $c['whatsapp'] ?? '')),
-        'priceRange' => 'Consultar',
         'sameAs' => $sameAs,
         'keywords' => site()['seo']['keywords'] ?? '',
         'address' => $address,
@@ -513,24 +531,38 @@ function schema_json(): string
         $org['foundingDate'] = (string) $co['founded'];
     }
 
+    $pageId = (string) ($page['id'] ?? 'home');
+    $isHome = $pageId === 'home';
     $graph = [$org];
     if (!empty($schema['cafe'])) {
-        $graph[] = [
+        $cafe = [
             '@type' => 'CafeOrCoffeeShop',
             '@id' => site_url() . '#casa-de-te',
             'name' => $schema['cafe']['name'],
             'servesCuisine' => $schema['cafe']['cuisine'] ?? '',
             'openingHours' => $schema['cafe']['opening_hours'] ?? '',
             'url' => canonical_url_for('casa-de-te'),
-            'image' => absolute_url(asset('img/tea/casa-de-te-salon-ventanales.jpg')),
+            'image' => public_asset_url($schema['cafe']['image'] ?? 'img/tea/casa-de-te-salon-ventanales.jpg'),
             'telephone' => $org['telephone'],
             'address' => $address,
             'geo' => $geo,
+            'hasMap' => $c['maps_url'] ?? '',
             'parentOrganization' => ['@id' => site_url() . '#organization'],
         ];
+        if (preg_match('/^(Mo|Tu|We|Th|Fr|Sa|Su)-(Mo|Tu|We|Th|Fr|Sa|Su) (\d{2}:\d{2})-(\d{2}:\d{2})$/', (string) ($schema['cafe']['opening_hours'] ?? ''), $m)) {
+            $days = ['Mo' => 'Monday', 'Tu' => 'Tuesday', 'We' => 'Wednesday', 'Th' => 'Thursday', 'Fr' => 'Friday', 'Sa' => 'Saturday', 'Su' => 'Sunday'];
+            $keys = array_keys($days);
+            $range = array_slice($keys, array_search($m[1], $keys, true), array_search($m[2], $keys, true) - array_search($m[1], $keys, true) + 1);
+            $cafe['openingHoursSpecification'] = [[
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => array_map(static fn (string $d): string => 'https://schema.org/' . $days[$d], $range),
+                'opens' => $m[3],
+                'closes' => $m[4],
+            ]];
+        }
+        $graph[] = $cafe;
     }
-    array_push($graph,
-        [
+    $graph[] = [
             '@type' => 'WebSite',
             '@id' => site_url() . '#website',
             'url' => is_local_request() ? site_url() : public_origin() . '/',
@@ -538,8 +570,10 @@ function schema_json(): string
             'alternateName' => $co['tagline'] ?? '',
             'inLanguage' => $co['locale'] ?? 'es-AR',
             'publisher' => ['@id' => site_url() . '#organization'],
-        ],
-        [
+    ];
+
+    if ($pageId !== 'error') {
+        $webPage = [
             '@type' => 'WebPage',
             '@id' => canonical_url() . '#webpage',
             'url' => canonical_url(),
@@ -547,11 +581,30 @@ function schema_json(): string
             'description' => $page['description'] ?? '',
             'inLanguage' => $co['locale'] ?? 'es-AR',
             'isPartOf' => ['@id' => site_url() . '#website'],
-            'about' => ['@id' => site_url() . '#organization'],
-        ]
-    );
+            'about' => ['@id' => $pageId === 'casa-de-te' && !empty($schema['cafe']) ? site_url() . '#casa-de-te' : site_url() . '#organization'],
+            'primaryImageOfPage' => [
+                '@type' => 'ImageObject',
+                'url' => public_asset_url((string) ($page['og_image'] ?? $co['og_image'])),
+            ],
+        ];
+        if (!empty($page['house']['name'])) {
+            $crumb = $page['house']['name'];
+            $webPage['breadcrumb'] = ['@id' => canonical_url() . '#breadcrumb'];
+            $graph[] = $webPage;
+            $graph[] = [
+                '@type' => 'BreadcrumbList',
+                '@id' => canonical_url() . '#breadcrumb',
+                'itemListElement' => [
+                    ['@type' => 'ListItem', 'position' => 1, 'name' => 'Inicio', 'item' => canonical_url_for('home')],
+                    ['@type' => 'ListItem', 'position' => 2, 'name' => $crumb, 'item' => canonical_url()],
+                ],
+            ];
+        } else {
+            $graph[] = $webPage;
+        }
+    }
 
-    if (!empty(site()['faq']['items'])) {
+    if ($isHome && !empty(site()['faq']['items'])) {
         $graph[] = [
             '@type' => 'FAQPage',
             '@id' => site_url() . '#faq',

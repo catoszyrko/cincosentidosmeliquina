@@ -21,6 +21,10 @@ return [
         'url' => 'https://cincosentidosmeliquina.com.ar',
         'canonical_host' => 'cincosentidosmeliquina.com.ar',
         'alias_hosts' => ['www.cincosentidosmeliquina.com.ar'],
+        // true: redirige todo a https://canonical_host y usa ese dominio en canonical/sitemap.
+        // false: el sitio responde en el dominio desde el que se lo visita, sin redirigir.
+        'force_canonical_host' => false,
+        // Search Console → "Etiqueta HTML": pegar solo el valor de content="…".
         'google_site_verification' => '',
         'logo' => 'img/brand/logo.png',
         'logo_light' => 'img/brand/logo-white.png',
@@ -98,7 +102,7 @@ return [
 
     'seo' => [
         'title' => 'Hostería y Casa de Té en Villa Lago Meliquina | Cinco Sentidos',
-        'description' => 'Hostería con desayuno casero y Casa de Té en Villa Lago Meliquina, a 40 km de San Martín de los Andes. Habitaciones dobles de 28 m² con vista a las montañas. Reservá por WhatsApp.',
+        'description' => 'Hostería con desayuno casero y Casa de Té en Villa Lago Meliquina, a 40 km de San Martín de los Andes. Habitaciones dobles de 28 m² con vista a las montañas.',
         'keywords' => 'hostería meliquina, casa de té meliquina, villa lago meliquina alojamiento, hospedaje meliquina, cinco sentidos meliquina, merienda meliquina, hostería san martín de los andes, ruta 63 meliquina',
         'og_title' => 'Cinco Sentidos · Hostería y Casa de Té en Villa Lago Meliquina',
         'og_description' => 'Habitaciones dobles con desayuno casero y una casa de té donde todo es de elaboración propia. A 40 km de San Martín de los Andes, rodeados de montañas.',
@@ -235,8 +239,8 @@ return [
                 'photo' => 'img/rooms/habitacion-doble-acolchado-floral.jpg',
                 'image_alt' => 'Habitación doble de la Hostería Cinco Sentidos con acolchado floral y ventana al jardín',
                 'wa_message' => 'Hola, quiero consultar disponibilidad en la Hostería Cinco Sentidos. Fechas: … Cantidad de personas: …',
-                'seo_title' => 'Hostería en Villa Lago Meliquina con desayuno casero | Cinco Sentidos',
-                'seo_description' => 'Hostería Cinco Sentidos en Villa Lago Meliquina: habitaciones dobles de 28 m², cama de 2 × 2 m o camas separadas, baño privado y desayuno casero. A 40 km de San Martín de los Andes.',
+                'seo_title' => 'Hostería en Villa Lago Meliquina | Cinco Sentidos',
+                'seo_description' => 'Habitaciones dobles de 28 m² con baño privado y desayuno casero en Villa Lago Meliquina, a 40 km de San Martín de los Andes. Cama de 2 × 2 m o camas separadas.',
                 'description' => [
                     'Hostería Cinco Sentidos nació de quienes nos visitaban a la hora del té y buscaban en Meliquina un lugar para descansar, desconectarse del estrés de la rutina y conectarse con uno mismo. Por eso la pensamos para parejas y para grupos de amigos o amigas.',
                     'Las habitaciones son amplias, con camas para descansar de verdad y vista al jardín y a las montañas. Cada mañana, el desayuno se prepara en nuestra Casa de Té con recetas heredadas de la familia y productos locales.',
@@ -279,8 +283,8 @@ return [
                 'photo' => 'img/tea/casa-de-te-salon-ventanales.jpg',
                 'image_alt' => 'Salón de la Casa de Té Cinco Sentidos con ventanales al bosque y mesas color agua',
                 'wa_message' => 'Hola, quiero hacer una consulta sobre la Casa de Té Cinco Sentidos.',
-                'seo_title' => 'Casa de Té en Villa Lago Meliquina: meriendas y pastelería | Cinco Sentidos',
-                'seo_description' => 'Casa de Té Cinco Sentidos en Villa Lago Meliquina: pastelería, meriendas, té y café especial de elaboración propia. Abre por la tarde, de 15 a 19 h, sobre la Ruta 63.',
+                'seo_title' => 'Casa de Té en Villa Lago Meliquina | Cinco Sentidos',
+                'seo_description' => 'Pastelería, meriendas, té y café especial de elaboración propia en Villa Lago Meliquina. Abrimos por la tarde, de 15 a 19 h, sobre la Ruta 63.',
                 'description' => [
                     'Abrimos nuestra primera casa de té en diciembre de 2014: muy chiquita, pero súper cálida. Todo se elaboraba en nuestra cabaña, al fondo del salón, y de a poco muchos clientes pasaron a ser amigos.',
                     'La casa de té de hoy la pensamos detalle por detalle: la puerta de entrada, el vitraux, la barra de adobe, los muebles antiguos de la familia y una estufa rocket que, con 3 horas de fuego en pleno invierno, calefacciona el día entero.',
