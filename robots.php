@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/inc/bootstrap.php';
 header('Content-Type: text/plain; charset=UTF-8');
 header('Cache-Control: public, max-age=86400');
-$sitemap = is_local_request() ? site_url('sitemap.xml') : public_origin() . '/sitemap.xml';
+$sitemap = site_url('sitemap.xml');
 
 echo "User-agent: *\n";
 echo "Allow: /\n";

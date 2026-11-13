@@ -48,27 +48,36 @@ function base_path(): string
     }
 
     $project = str_replace('\\', '/', realpath(TPL_ROOT) ?: TPL_ROOT);
-    $docRoot = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '');
-    if ($docRoot !== '' && $project !== $docRoot && str_starts_with($project, $docRoot)) {
-        $base = rtrim(substr($project, strlen($docRoot)), '/') ?: '';
-        return $base;
-    }
-
     $script = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '/index.php'));
-    $dir = rtrim(str_replace('\\', '/', dirname($script)), '/');
-    $nested = array_merge(['privacidad', 'admin'], array_column(site()['lodging']['items'], 'slug'));
-    $dirName = basename($dir);
-    if (in_array($dir, ['', '.', '/'], true) || in_array($dirName, $nested, true)) {
-        if (in_array($dirName, $nested, true)) {
-            $parent = rtrim(dirname($dir), '/');
-            $base = ($parent === '' || $parent === '/' || $parent === '.') ? '' : $parent;
+
+    // /sub/hosteria/index.php servido desde {proyecto}/hosteria/index.php → base /sub.
+    // No depende de DOCUMENT_ROOT, que en hostings con varios dominios suele apuntar a otra carpeta.
+    $file = str_replace('\\', '/', realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) ?: '');
+    if ($file !== '' && str_starts_with($file, $project . '/') && basename($file) !== 'router.php') {
+        $relative = substr($file, strlen($project));
+        if (str_ends_with($script, $relative)) {
+            $base = rtrim(substr($script, 0, -strlen($relative)), '/');
             return $base;
         }
-        $base = '';
+    }
+
+    if (str_ends_with($script, '.php')) {
+        $dir = rtrim(dirname($script), '/');
+        $nested = array_merge(['privacidad', 'admin'], array_column(site()['lodging']['items'], 'slug'));
+        if (in_array(basename($dir), $nested, true)) {
+            $dir = rtrim(dirname($dir), '/');
+        }
+        $base = in_array($dir, ['', '.'], true) ? '' : $dir;
         return $base;
     }
 
-    $base = $dir;
+    $docRoot = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '');
+    if ($docRoot !== '' && str_starts_with($project, $docRoot . '/')) {
+        $base = rtrim(substr($project, strlen($docRoot)), '/');
+        return $base;
+    }
+
+    $base = '';
     return $base;
 }
 
@@ -295,11 +304,7 @@ function canonical_url(): string
         $path = '/' . trim((string) preg_replace('/\.php$/', '', $file), '/') . '/';
     }
 
-    if (is_local_request()) {
-        return rtrim(origin() . base_path(), '/') . ($path === '/' ? '/' : $path);
-    }
-
-    return public_origin() . ($path === '/' ? '/' : $path);
+    return rtrim(origin() . base_path(), '/') . $path;
 }
 
 function is_page(string $id): bool
@@ -509,7 +514,7 @@ function schema_json(): string
         'name' => $co['name'],
         'alternateName' => array_values(array_filter(array_merge([$co['short'] ?? ''], $schema['alternate_names'] ?? []))),
         'description' => site()['seo']['description'] ?? '',
-        'url' => is_local_request() ? site_url() : public_origin() . '/',
+        'url' => site_url(),
         'logo' => public_asset_url($co['logo']),
         'image' => public_asset_url($co['og_image'] ?? $co['logo']),
         'telephone' => $c['phone'] ?? ('+' . preg_replace('/\D+/', '', $c['whatsapp'] ?? '')),
@@ -565,7 +570,7 @@ function schema_json(): string
     $graph[] = [
             '@type' => 'WebSite',
             '@id' => site_url() . '#website',
-            'url' => is_local_request() ? site_url() : public_origin() . '/',
+            'url' => site_url(),
             'name' => $co['name'],
             'alternateName' => $co['tagline'] ?? '',
             'inLanguage' => $co['locale'] ?? 'es-AR',
