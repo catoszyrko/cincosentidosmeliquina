@@ -1,0 +1,21 @@
+<?php
+declare(strict_types=1);
+?>
+<main id="contenido">
+  <?php
+  section('hero');
+  section('lodging');
+  section('why');
+  section('rooms');
+  section('features');
+  section('method');
+  section('testimonials');
+  section('gallery');
+  section('history');
+  section('area');
+  section('location');
+  section('booking');
+  section('faq');
+  section('cta');
+  ?>
+</main>
